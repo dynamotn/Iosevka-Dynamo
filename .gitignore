@@ -1,0 +1,5 @@
+debug.log
+__pycache__
+.uuid
+/assets/*
+!/assets/.gitkeep
