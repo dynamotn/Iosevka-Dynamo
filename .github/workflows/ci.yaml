@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged --shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl fontforge python3-fontforge
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build
+        run: |
+          bash -c $(pwd)/scripts/build.sh
+          tar czvf iosevka-dynamo.tar.gz -C build .
+      - name: Release files
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: iosevka-dynamo.tar.gz
+          asset_name: iosevka-dynamo.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true

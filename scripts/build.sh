@@ -18,6 +18,7 @@ prerequisite() {
   dybatpho::require 'grep'
   dybatpho::require 'unzip'
   dybatpho::require 'fontforge'
+  dybatpho::require 'docker'
 }
 
 download_iosevka() {
@@ -51,7 +52,7 @@ download_firacode() {
 patch_nerd() {
   dybatpho::notice "Patching Nerd Font"
   local input_filename="iosevka-dynamo-regular.ttf"
-  docker run -it --rm \
+  docker run --rm \
     -v "$OUTPUT_DIR/${input_filename}":/in/iosevka-dynamo.ttf \
     -v "$OUTPUT_DIR":/out \
     nerdfonts/patcher \
