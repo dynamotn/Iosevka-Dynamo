@@ -58,6 +58,9 @@ def parse_args():
         " --output-name flags.",
     )
     parser.add_argument(
+        "--version", "-v", type=str, default="", help="Version of ligaturized font."
+    )
+    parser.add_argument(
         "--debug",
         "-d",
         default=False,
@@ -68,7 +71,15 @@ def parse_args():
 
 
 def main(
-    base_font_file, ligature_font_file, name, prefix, suffix, directory, debug, **kwargs
+    base_font_file,
+    ligature_font_file,
+    name,
+    prefix,
+    suffix,
+    directory,
+    version,
+    debug,
+    **kwargs,
 ):
     if debug:
         level = logging.DEBUG
@@ -92,7 +103,7 @@ def main(
 
     patcher = Patcher(base_font_file, ligature_font_file)
     patcher.patch()
-    generator = Generator(patcher.base_font)
+    generator = Generator(patcher.base_font, version)
     generator.update_font_metadata(prefix, name, suffix)
     generator.generate(directory)
 

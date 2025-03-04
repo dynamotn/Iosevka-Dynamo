@@ -13,14 +13,15 @@ class Generator(object):
         + " from FiraCode."
         + " FiraCode Copyright Ⓒ 2015 by Nikita Prokopov"
     )
-    VERSION = "v1.18.0"
 
-    def __init__(self, base_font):
+    def __init__(self, base_font, version):
         """
         Args:
             base_font: (FontForge's font object) Base font to create new font
+            version: Version of output font
         """
         self.base_font = base_font
+        self.version = version
 
     def replace_sfnt(self, key, value):
         """Replace value of a key in SFNT metadata of base font to new value"""
@@ -55,7 +56,7 @@ class Generator(object):
         self.replace_sfnt("Compatible Full", new_name)
         self.replace_sfnt("Family", new_name)
         self.replace_sfnt("WWS Family", new_name)
-        self.replace_sfnt("Version", Generator.VERSION)
+        self.replace_sfnt("Version", self.version)
 
     def generate(self, directory):
         """Generate new font from base font
