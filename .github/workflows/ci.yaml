@@ -23,11 +23,19 @@ jobs:
         run: |
           bash -c $(pwd)/scripts/build.sh
           tar czvf iosevka-dynamo.tar.gz -C build .
-      - name: Release files
+      - name: Release all files
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: iosevka-dynamo.tar.gz
           asset_name: iosevka-dynamo.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true
+      - name: Release nerd font file
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/iosevka-dynamo-nerd.ttf
+          asset_name: iosevka-dynamo-nerd.ttf
           tag: ${{ github.ref }}
           overwrite: true
