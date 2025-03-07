@@ -8,7 +8,7 @@ And FiraCode has some ligatures that I need.
 ## Which version of font that I use?
 FiraCode v4 has infinite-length that I don't want to use and has some bugs on kitty (https://github.com/tonsky/FiraCode/issues/1081).
 So I will use FiraCode v3.1 for my font.
-> ![Note]
+> ![NOTE]
 > TODO: I will try to get some ligatures in higher version to my font in the future.
 
 ## Requirements
