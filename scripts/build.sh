@@ -59,18 +59,24 @@ download_firacode() {
 
 patch_nerd() {
   dybatpho::notice "Patching Nerd Font"
-  local input_filename="iosevka-dynamo-regular.ttf"
-  docker run --rm \
-    -v "$OUTPUT_DIR/${input_filename}":/in/iosevka-dynamo.ttf \
-    -v "$OUTPUT_DIR":/out \
-    nerdfonts/patcher \
-    --name "'Iosevka Dynamo Nerd'" \
-    --mono --fontawesome --codicons --material --octicons --careful
-  local patched_filename="IosevkaDynamoNerd-Regular.ttf"
-  local output_filename="iosevka-dynamo-nerd.ttf"
-  sudo mv "${OUTPUT_DIR}/${patched_filename}" \
-    "${OUTPUT_DIR}/${output_filename}"
-  sudo chown "$USER" "${OUTPUT_DIR}/${output_filename}"
+  local style_names=("Regular" "Italic" "Bold" "BoldItalic")
+  local font_suffixes=("" " Italic" " Bold" " Bold Italic")
+  local style_count=0
+  for style_name in "${style_names[@]}"; do
+    local input_filename="iosevka-dynamo-$(dybatpho::lower "$style_name").ttf"
+    local patched_filename="IosevkaDynamoNerd-${style_name}.ttf"
+    local output_filename="iosevka-dynamo-nerd-$(dybatpho::lower "$style_name").ttf"
+    docker run --rm \
+      -v "$OUTPUT_DIR/${input_filename}":/in/iosevka-dynamo.ttf \
+      -v "$OUTPUT_DIR":/out \
+      nerdfonts/patcher \
+      --name "'Iosevka Dynamo Nerd${font_suffixes[$style_count]}'" \
+      --mono --fontawesome --codicons --material --octicons --careful
+    ((style_count += 1))
+    sudo mv "${OUTPUT_DIR}/${patched_filename}" \
+      "${OUTPUT_DIR}/${output_filename}"
+    sudo chown "$USER" "${OUTPUT_DIR}/${output_filename}"
+  done
 }
 
 main() {
