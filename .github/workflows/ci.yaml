@@ -1,8 +1,11 @@
 name: CI
 on:
+  workflow_dispatch:
   push:
     tags:
       - v*
+  schedule:
+    - cron: '0 1 * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
