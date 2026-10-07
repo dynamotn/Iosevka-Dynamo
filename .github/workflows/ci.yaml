@@ -42,3 +42,10 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+  workflow-keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: liskin/gh-workflow-keepalive@v1
