@@ -3,4 +3,5 @@ __pycache__
 .uuid
 /assets/*
 /build/*
+/public
 !**/.gitkeep
