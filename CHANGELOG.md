@@ -1,5 +1,12 @@
 ## CHANGELOG
 
+### [Unreleased]
+
+#### Added
+
+* Build WOFF2 web fonts with `@font-face` stylesheets (`iosevka-dynamo.css`, `iosevka-dynamo-nerd.css`) and a demo page
+* Publish web fonts to GitHub Pages so they can be embedded in any website
+
 ### v2.1.0
 
 * Update Iosevka to latest version v33.2.3
