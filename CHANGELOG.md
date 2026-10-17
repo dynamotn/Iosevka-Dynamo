@@ -7,11 +7,11 @@
 * Build WOFF2 web fonts with `@font-face` stylesheets (`iosevka-dynamo.css`, `iosevka-dynamo-nerd.css`) and a demo page
 * Publish web fonts to GitHub Pages so they can be embedded in any website
 * Split each web font style by Unicode block with `unicode-range`, so a page downloads only the scripts it shows (about 50 KB for English instead of 430 KB); `*-full.css` keeps one file per style
-* Shape every ligature of the built fonts in the test suite, so a glyph missing from FiraCode can no longer drop a ligature silently
+* Shape the ligatures of the built fonts against FiraCode in the test suite, so a glyph missing from FiraCode can no longer drop a ligature silently
 
 #### Changed
 
-* Update FiraCode to v6.2: ligature glyphs take its current shapes and `|||` is added. Arrows and lines (`->`, `<=>`, `##`, `__`...) are built from FiraCode's start/middle/end pieces while keeping fixed-length rules, and `|=`, `||=`, `>>=`, `<<=`, `.=`, `.-`, `:>`, `<:` are kept although FiraCode 6 dropped or hid them
+* Update FiraCode to v6.2 and use its own `calt` rules: arrows and lines now have any length (`---->`, `<===>`, `######`, `____`) as in FiraCode 4+, `|||` and `|=|` are added, and the glyphs take FiraCode's current shapes. `|=`, `||=`, `>>=`, `<<=`, `.=`, `.-`, `=~` and `!~` stay ligatures although FiraCode 6 dropped or hid them; `/**` and `>-<` follow FiraCode 6 (`/*` stays plain, `>-<` is an arrow)
 
 #### Fixed
 

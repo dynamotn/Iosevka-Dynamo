@@ -2,6 +2,7 @@
 
 from os import path
 
+from features import add_calt
 from fixedpitch import mark_fixed_pitch
 
 
@@ -84,3 +85,5 @@ class Generator(object):
         # FontForge clears post.isFixedPitch because of zero-width combining
         # marks; macOS needs it to treat the font as monospace (issue #2)
         mark_fixed_pitch(output_font_file)
+        # Compile the ligature rules into the GSUB table Iosevka already has
+        add_calt(output_font_file)

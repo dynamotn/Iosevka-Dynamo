@@ -1,25 +1,52 @@
-"""Font patcher to add ligatures"""
+"""Font patcher to copy the ligature glyphs"""
 
 import fontforge
 import psMat
-from .firacode import LIGATURES, CHAR_DICT, COPY_CHARS, SPACE
+
+from features import glyphs_of, read_feature
+
+# Characters that appear in ligatures, copied from the ligature font so they
+# look the same inside and outside a ligature. The asterisk stays from the
+# base font (v1.4.1).
+COPY_CHARS = [
+    "ampersand",
+    "asciicircum",
+    "asciitilde",
+    "backslash",
+    "bar",
+    "colon",
+    "equal",
+    "exclam",
+    "greater",
+    "hyphen",
+    "less",
+    "numbersign",
+    "percent",
+    "period",
+    "plus",
+    "question",
+    "semicolon",
+    "slash",
+    "underscore",
+]
 
 
 class Patcher(object):
-    """Subclass to patch font file to add ligatures"""
+    """Subclass to patch font file to add ligatures
 
-    SINGLE_MAIN_LOOKUP = "single.{}.{}"
-    SINGLE_SUBTABLE_LOOKUP = "single.{}.{}.1"
-    EMPTY_GLYPH_NAME = "empty.{}.{}"
-    CONTEXTUAL_MAIN_LOOKUP = "calt.{}"
-    CONTEXTUAL_SUBTABLE_LOOKUP = "calt.{}.{}"
+    The glyphs that the contextual alternates of calt.fea produce are copied
+    from the ligature font; the rules themselves are compiled into the
+    generated file by features.add_calt.
+    """
 
-    def __init__(self, base_font, liga_font):
+    def __init__(self, base_font, liga_font, fea_text=None):
         """
         Args:
             base_font: (string) Path of base font to create new font
             liga_font: (string) Path of ligature font that want to
                 add ligatures to base font
+            fea_text: (string) Feature file naming the glyphs to copy,
+                calt.fea by default
         """
         try:
             self.base_font = fontforge.open(base_font)
@@ -30,6 +57,7 @@ class Patcher(object):
         except Exception as e:
             print("Exception while opening font file: {}".format(e))
             raise
+        self.fea_text = fea_text if fea_text is not None else read_feature()
 
     def copy_char_from_source(self, name):
         """Copy character from ligature font to FontForge's clipboard
@@ -48,14 +76,13 @@ class Patcher(object):
         except ValueError:
             return False
 
-    def paste_char_to_destination(self, name, is_ligature=True):
+    def paste_char_to_destination(self, name):
         """Paste character from FontForge's clipboard to base font
 
         Args:
             name: (string) Name of character in ligature font.
-            is_ligature: (bool) Flag to specify character that is ligature
         """
-        if is_ligature and name not in self.base_font:
+        if name not in self.base_font:
             # Create a new character for ligature
             self.base_font.createChar(-1, name)
 
@@ -84,269 +111,47 @@ class Patcher(object):
         glyph.transform(psMat.scale(scale, 1.0))
         glyph.width = max_width
 
-    def create_single_lookup(self, input_chars, ligature_name, parts=None):
-        """
-        Create FontForge lookup, for each segment of ligature from input chars.
+    def rename_base_char(self, name):
+        """Give a glyph of the base font the name the rules use for it, found
+        by code point in the ligature font
 
         Args:
-            input_chars: (list) A list of input characters.
-            ligature_name: (string) Name of ligature in ligature font.
-            parts: (list) Glyph of ligature font to draw in each cell, or
-                None for an empty cell. Without it, the last cell draws
-                ligature_name and the other cells are empty.
+            name: (string) Glyph name in the ligature font
+
+        Returns:
+            True/False: whether the base font has the glyph under that name now
         """
-        lookup_name = lambda i: Patcher.SINGLE_MAIN_LOOKUP.format(ligature_name, i)
-        subtable_name = lambda i: Patcher.SINGLE_SUBTABLE_LOOKUP.format(
-            ligature_name, i
-        )
-        spacer_name = lambda i: Patcher.EMPTY_GLYPH_NAME.format(ligature_name, i)
+        if name in self.base_font:
+            return True
+        code_point = self.liga_font[name].unicode
+        if code_point == -1 or code_point not in self.base_font:
+            return False
+        print("Renaming {} to {}".format(self.base_font[code_point].glyphname, name))
+        self.base_font[code_point].glyphname = name
+        return True
 
-        for i, char in enumerate(input_chars):
-            self.base_font.addLookup(lookup_name(i), "gsub_single", (), ())
-            self.base_font.addLookupSubtable(lookup_name(i), subtable_name(i))
-
-            if char not in self.base_font:
-                # Add glyph for current char if base font doesn't have it
-                self.base_font[ord(CHAR_DICT[char])].glyphname = char
-
-            if parts:
-                replacement = parts[i]
-            elif i < len(input_chars) - 1:
-                replacement = None
-            else:
-                replacement = ligature_name
-
-            if replacement is None:
-                print(
-                    "Adding empty glyph and replace rule for {}.{} char {}".format(
-                        ligature_name, i, char
-                    )
-                )
-                # Create an empty glyph for each empty segment of ligature
-                self.base_font.selection.none()
-                self.base_font.selection.select(SPACE)
-                self.base_font.copy()
-
-                self.base_font.createChar(-1, spacer_name(i))
-                self.base_font.selection.none()
-                self.base_font.selection.select(spacer_name(i))
-                self.base_font.paste()
-
-                replacement = spacer_name(i)
-            else:
-                print(
-                    "Adding replace rule for {}.{} char {} -> {}".format(
-                        ligature_name, i, char, replacement
-                    )
-                )
-            # Add rule for replacement of this segment if the sequence matches
-            self.base_font[char].addPosSub(subtable_name(i), replacement)
-
-    def create_matching_lookup(self, input_chars, ligature_name, **kwargs):
-        """
-        Create FontForge lookup, for matching rule from list of segment
-        to generate ligature
-
-        Args:
-            input_chars: (list) A list of input characters.
-            ligature_name: (string) Name of ligature in ligature font.
-        """
-        lookup_name = Patcher.CONTEXTUAL_MAIN_LOOKUP.format(ligature_name)
-        single_lookup_name = lambda i: Patcher.SINGLE_MAIN_LOOKUP.format(
-            ligature_name, i
-        )
-        subtable_name = lambda i: Patcher.CONTEXTUAL_SUBTABLE_LOOKUP.format(
-            ligature_name, i
-        )
-        spacer_name = lambda i: Patcher.EMPTY_GLYPH_NAME.format(ligature_name, i)
-        prev_segment = lambda i: " ".join(spacer_name(j) for j in range(i))
-        next_segment = lambda i: " ".join(input_chars[i + 1 :])
-
-        self.base_font.addLookup(
-            lookup_name,
-            "gsub_contextchain",
-            (),
-            (("calt", (("DFLT", ("dflt")), ("latn", ("dflt")), ("math", ("dflt")))),),
-        )
-        print("Adding CALT contextual with name %s" % (lookup_name))
-
-        for i, char in enumerate(input_chars):
-            if kwargs.get("rule", ""):
-                self.add_contextual_alternative(
-                    lookup_name,
-                    subtable_name(i),
-                    kwargs.get("rule", ""),
-                    kwargs.get("rule_kind", "glyph"),
-                    prev=prev_segment(i),
-                    current=char,
-                    lookup=single_lookup_name(i),
-                    next=next_segment(i),
-                )
-            else:
-                # Add rule in subtable of lookup
-                self.add_contextual_alternative(
-                    lookup_name,
-                    subtable_name(i),
-                    "{prev} | {current} @<{lookup}> | {next}",
-                    prev=prev_segment(i),
-                    current=char,
-                    lookup=single_lookup_name(i),
-                    next=next_segment(i),
-                )
-
-    def create_ignore_subtable(
-        self, input_chars, ligature_name, ignore_before=None, ignore_after=None
-    ):
-        """Create ignore rule for ligature
-
-        Args:
-            input_chars: (list) A list of input characters.
-            ligature_name: (string) Name of ligature in ligature font.
-            ignore_before: (list) A list of additional rules that
-                want to ignore ligature if has character(s) before the start
-            ignore_after: (list) A list of additional rules that
-                want to ignore ligature if has character(s) after the end.
-        """
-        lookup_name = Patcher.CONTEXTUAL_MAIN_LOOKUP.format(ligature_name)
-        subtable_name = lambda i: Patcher.CONTEXTUAL_SUBTABLE_LOOKUP.format(
-            ligature_name, i
-        )
-        index = len(input_chars) - 1
-
-        # Add case a...bb
-        index += 1
-        self.add_contextual_alternative(
-            lookup_name,
-            subtable_name(index),
-            "| {first} | {rest} {last}",
-            first=input_chars[0],
-            rest=" ".join(input_chars[1:]),
-            last=input_chars[-1],
-        )
-        # Add case aa...b
-        index += 1
-        self.add_contextual_alternative(
-            lookup_name,
-            subtable_name(index),
-            "{first} | {first} | {rest}",
-            first=input_chars[0],
-            rest=" ".join(input_chars[1:]),
-        )
-        # Add additional case
-        for list_chars in ignore_after:
-            index += 1
-            self.add_contextual_alternative(
-                lookup_name,
-                subtable_name(index),
-                "| {first} | {rest} {after}",
-                after=list_chars.replace("_", " "),
-                first=input_chars[0],
-                rest=" ".join(input_chars[1:]),
-            )
-        for list_chars in ignore_before:
-            index += 1
-            self.add_contextual_alternative(
-                lookup_name,
-                subtable_name(index),
-                "{before} | {first} | {rest}",
-                before=list_chars.replace("_", " | "),
-                first=input_chars[0],
-                rest=" ".join(input_chars[1:]),
-            )
-
-    def add_contextual_alternative(
-        self, lookup_name, subtable_name, rule, kind="glyph", **kwargs
-    ):
-        """Wrapper to creates a subtable within the specified contextual
-        lookup for ligature.
-
-        Args:
-            lookup_name: (string) FontForge lookup name
-            subtable_name: (string) FontForge subtable name
-            rule: (string) Glyph rule to match that follow FontForge convention
-            kind: (string) Type of addContextualSubtable of FontForge
-        """
-        rule = rule.format(**kwargs)
-        print("Subtable %s (%s): %s" % (subtable_name, kind, rule))
-        self.base_font.addContextualSubtable(lookup_name, subtable_name, kind, rule)
-
-    def add_ligature(
-        self,
-        input_chars,
-        ligature_name,
-        ignore_before=None,
-        ignore_after=None,
-        parts=None,
-        **kwargs,
-    ):
-        """Add ligature character & rules of it to base font that follow a
-        sequence input characters by lookup from ligature font by ligature name.
-
-        Args:
-            input_chars: (list) A list of input characters.
-            ligature_name: (string) Name of ligature in ligature font.
-            ignore_before: (list) A list of additional rules that
-                want to ignore ligature if has character(s) before the start
-            ignore_after: (list) A list of additional rules that
-                want to ignore ligature if has character(s) after the end.
-            parts: (list) Glyph of ligature font for each cell, see
-                create_single_lookup. When given, ligature_name only names
-                the lookups.
+    def glyphs_to_copy(self):
+        """Glyphs the rules need that the base font has not, in rule order.
 
         Raises:
-            LookupError: a glyph is missing in the ligature font, so the
-                ligature would be silently lost.
+            LookupError: a glyph is missing from the ligature font too, so a
+                rule could not be compiled.
         """
-        if parts and len(parts) != len(input_chars):
-            raise ValueError(
-                "{} has {} parts for {} chars".format(
-                    ligature_name, len(parts), len(input_chars)
-                )
-            )
-
-        # Copy each glyph of ligature from ligature font by FontForge
-        glyphs = [part for part in parts if part] if parts else [ligature_name]
-        for glyph in glyphs:
-            if glyph in self.base_font:
-                # Piece shared with an already added ligature
-                continue
-            if not self.copy_char_from_source(glyph):
-                raise LookupError(
-                    "Glyph {} of {} is missing in ligature font".format(
-                        glyph, ligature_name
-                    )
-                )
-            self.paste_char_to_destination(glyph)
-
-        # Create FontForge lookup
-        self.create_single_lookup(input_chars, ligature_name, parts)
-        self.create_matching_lookup(input_chars, ligature_name, **kwargs)
-        self.create_ignore_subtable(
-            input_chars, ligature_name, ignore_before, ignore_after
-        )
+        names = []
+        for name in glyphs_of(self.fea_text, include_classes=False):
+            if name in COPY_CHARS:
+                names.append(name)
+            elif name in self.liga_font:
+                if not self.rename_base_char(name):
+                    names.append(name)
+            elif name not in self.base_font:
+                raise LookupError("Glyph {} is missing in both fonts".format(name))
+        return names
 
     def patch(self):
         """Patch font"""
-        # Copy individual characters that is appeared in ligatures
-        for char in COPY_CHARS:
-            print("Adding {}".format(char))
-            if not self.copy_char_from_source(char):
-                continue
-            self.paste_char_to_destination(char, False)
-
-        # Add ligatures
-        for spec in sorted(LIGATURES, key=lambda spec: len(spec["chars"])):
-            try:
-                print("Adding {}".format(spec["name"]))
-                self.add_ligature(
-                    spec["chars"],
-                    spec["name"],
-                    spec.get("ignore_before", []),
-                    spec.get("ignore_after", []),
-                    parts=spec.get("parts"),
-                    rule=spec.get("rule", ""),
-                    rule_kind=spec.get("rule_kind", "glyph"),
-                )
-            except Exception as e:
-                print("Exception while adding ligature: {}\n{}".format(spec, e))
-                raise
+        for name in self.glyphs_to_copy():
+            print("Adding {}".format(name))
+            if not self.copy_char_from_source(name):
+                raise LookupError("Glyph {} is missing in ligature font".format(name))
+            self.paste_char_to_destination(name)
