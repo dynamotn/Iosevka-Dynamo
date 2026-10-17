@@ -57,7 +57,9 @@ class BuiltFontTest(unittest.TestCase):
             copied = [
                 g
                 for g in ours.getGlyphOrder()
-                if g in fira.getGlyphOrder() and ("." in g or "_" in g)
+                if g in fira.getGlyphOrder()
+                and ("." in g or "_" in g)
+                and g != ".notdef"
             ]
             self.assertGreater(len(copied), 150)
             for name in copied:
