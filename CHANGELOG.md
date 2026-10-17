@@ -8,6 +8,10 @@
 * Publish web fonts to GitHub Pages so they can be embedded in any website
 * Split each web font style by Unicode block with `unicode-range`, so a page downloads only the scripts it shows (about 50 KB for English instead of 430 KB); `*-full.css` keeps one file per style
 
+#### Fixed
+
+* Mark the generated fonts as fixed pitch so macOS recognizes `Iosevka Dynamo` as a monospace font (#2)
+
 ### v2.1.0
 
 * Update Iosevka to latest version v33.2.3

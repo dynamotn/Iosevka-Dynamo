@@ -2,6 +2,8 @@
 
 from os import path
 
+from fixedpitch import mark_fixed_pitch
+
 
 class Generator(object):
     """Subclass to modify font metadata and generate font file"""
@@ -79,3 +81,6 @@ class Generator(object):
             "Generating %s font to '%s'" % (self.base_font.fullname, output_font_file)
         )
         self.base_font.generate(output_font_file)
+        # FontForge clears post.isFixedPitch because of zero-width combining
+        # marks; macOS needs it to treat the font as monospace (issue #2)
+        mark_fixed_pitch(output_font_file)
