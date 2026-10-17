@@ -210,6 +210,30 @@ class StandInFontTest(unittest.TestCase):
         self.assertIn("calt", tags)
         self.assertIn("ccmp", tags)
 
+    def test_latin_web_part_keeps_the_ligatures(self):
+        """The Latin part of the web font is all a page of code loads"""
+        try:
+            import brotli  # noqa: F401
+        except ImportError:
+            self.skipTest("brotli is not installed")
+        import web
+
+        cmap = TTFont(self.font_file).getBestCmap()
+        latin = dict(web.partition(sorted(cmap)))["latin"]
+        woff2 = path.join(self.tmp.name, "latin.woff2")
+        web.write_subset(self.font_file, woff2, latin)
+        # HarfBuzz does not read WOFF2, unpack it first
+        part = TTFont(woff2)
+        part.flavor = None
+        ttf = path.join(self.tmp.name, "latin.ttf")
+        part.save(ttf)
+
+        ours = cases.shaper(ttf)
+        fira = cases.shaper(cases.FIRACODE["Regular"])
+        for text in cases.TEXTS:
+            with self.subTest(text=text):
+                self.assertEqual(ours(text), cases.expected(fira, text))
+
 
 if __name__ == "__main__":
     unittest.main()
