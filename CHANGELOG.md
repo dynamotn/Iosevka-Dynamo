@@ -6,6 +6,7 @@
 
 * Build WOFF2 web fonts with `@font-face` stylesheets (`iosevka-dynamo.css`, `iosevka-dynamo-nerd.css`) and a demo page
 * Publish web fonts to GitHub Pages so they can be embedded in any website
+* Split each web font style by Unicode block with `unicode-range`, so a page downloads only the scripts it shows (about 50 KB for English instead of 430 KB); `*-full.css` keeps one file per style
 
 ### v2.1.0
 

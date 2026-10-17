@@ -24,11 +24,13 @@ jobs:
           - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl fontforge python3-fontforge
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl fontforge python3-fontforge python3-fonttools python3-brotli
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Test
+        run: python3 -m unittest discover -s test
       - name: Build
         run: |
           bash -c $(pwd)/scripts/build.sh

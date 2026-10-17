@@ -30,6 +30,9 @@ function _prerequisite {
   dybatpho::require 'unzip'
   dybatpho::require 'fontforge'
   dybatpho::require 'docker'
+  dybatpho::require 'python3'
+  python3 -c 'import fontTools.subset, brotli' 2> /dev/null \
+    || dybatpho::die "Web fonts need the fontTools and brotli Python modules"
 }
 
 #######################################

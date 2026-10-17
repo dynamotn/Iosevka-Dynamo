@@ -13,6 +13,7 @@ So I will use FiraCode v3.1 for my font.
 
 ## Requirements
 This script requires FontForge to build font. AFAIK, you can must `python-fontforge` (Debian/Ubuntu or ArchLinux) or `fontforge` (Gentoo, OpenSUSE).
+The web fonts also need the `fontTools` and `brotli` Python modules (`python3-fonttools` and `python3-brotli` on Debian/Ubuntu).
 
 ## Use on the web
 Every CI build converts the fonts to WOFF2 and publishes them to GitHub Pages at
@@ -27,5 +28,12 @@ Embed the font with a single stylesheet:
 ```
 
 Use `iosevka-dynamo-nerd.css` and the `"Iosevka Dynamo Nerd"` family for Nerd Font icons.
+
+Each style is split by Unicode block (Latin, Vietnamese, Latin Extended, Greek,
+Cyrillic, symbols, icons and the rest) and declared with `unicode-range`, so a
+browser downloads only the parts a page uses: about 50 KB for English text
+instead of the whole 430 KB style. `iosevka-dynamo-full.css` and
+`iosevka-dynamo-nerd-full.css` load each style as one file, and the whole
+`fonts/<name>.woff2` files stay published.
 
 To build the site locally, run `scripts/build.sh`; the result is written to `public/`.
