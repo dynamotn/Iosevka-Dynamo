@@ -24,7 +24,10 @@ jobs:
           - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl unzip fontforge python3-fontforge python3-fonttools python3-brotli python3-uharfbuzz
+        run: |
+          sudo apt-get update && sudo apt-get install -y --fix-missing curl unzip fontforge python3-fontforge python3-fonttools python3-brotli
+          # Not packaged by Ubuntu; only the shaping tests need it
+          python3 -m pip install --break-system-packages uharfbuzz
       - name: Checkout
         uses: actions/checkout@v4
         with:

@@ -27,7 +27,7 @@ Then the script patches the four main styles with the [Nerd Fonts patcher](https
 * FontForge with its Python module: `python-fontforge` (Debian/Ubuntu or ArchLinux) or `fontforge` (Gentoo, OpenSUSE).
 * The `fontTools` and `brotli` Python modules (`python3-fonttools` and `python3-brotli` on Debian/Ubuntu), for the feature compilation, the fixed-pitch flag and the web fonts.
 * `curl`, `unzip` and Docker, for the downloads and the Nerd Fonts patcher.
-* The `uharfbuzz` Python module (`python3-uharfbuzz`), only for the shaping tests.
+* The `uharfbuzz` Python module (`pip install uharfbuzz`, it is not packaged by Debian/Ubuntu), only for the shaping tests, which are skipped without it.
 
 ## Tests
 ```sh
