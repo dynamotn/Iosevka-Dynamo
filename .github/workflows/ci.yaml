@@ -24,7 +24,7 @@ jobs:
           - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl fontforge python3-fontforge python3-fonttools python3-brotli
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing curl unzip fontforge python3-fontforge python3-fonttools python3-brotli python3-uharfbuzz
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -35,6 +35,8 @@ jobs:
         run: |
           bash -c $(pwd)/scripts/build.sh
           tar czvf iosevka-dynamo.tar.gz -C build .
+      - name: Test built fonts
+        run: python3 -m unittest discover -s test
       - name: Release all files
         uses: svenstaro/upload-release-action@v2
         with:

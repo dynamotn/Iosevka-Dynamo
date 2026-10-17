@@ -1,4 +1,19 @@
-"""Specification of font ligatures from FiraCode"""
+"""Specification of font ligatures from FiraCode 6.2
+
+Each entry of LIGATURES names the glyph(s) to copy from FiraCode for a
+sequence of characters:
+
+* ``chars``: the input characters, by glyph name.
+* ``name``: a glyph of FiraCode. Without ``parts`` it is a single ligature
+  glyph drawn in the cell of the last character, while the other cells are
+  replaced by empty glyphs.
+* ``parts``: one glyph of FiraCode per character, for the ligatures that
+  FiraCode 4+ builds from ``*_start.seq``, ``*_middle.seq`` and ``*_end.seq``
+  pieces (arrows, lines, ``##``, ``__``...). ``None`` keeps a cell empty. The
+  sequence stays fixed-length: longer runs are left alone, unlike FiraCode.
+* ``rule``/``rule_kind``: a custom contextual rule, for context-aware glyphs.
+* ``ignore_before``/``ignore_after``: contexts that disable the ligature.
+"""
 
 import string
 
@@ -67,10 +82,6 @@ LIGATURES = [
         "chars": ["ampersand", "ampersand"],
         "name": "ampersand_ampersand.liga",
     },
-    {  # &&&  # absent from 2.0
-        "chars": ["ampersand", "ampersand", "ampersand"],
-        "name": "ampersand_ampersand_ampersand.liga",
-    },
     {  # ^=
         "chars": ["asciicircum", "equal"],
         "name": "asciicircum_equal.liga",
@@ -79,10 +90,6 @@ LIGATURES = [
         "chars": ["asciitilde", "asciitilde"],
         "name": "asciitilde_asciitilde.liga",
     },
-    {  # ~~~  # absent from 2.0
-        "chars": ["asciitilde", "asciitilde", "asciitilde"],
-        "name": "asciitilde_asciitilde_asciitilde.liga",
-    },
     {  # ~~>
         "chars": ["asciitilde", "asciitilde", "greater"],
         "name": "asciitilde_asciitilde_greater.liga",
@@ -90,10 +97,6 @@ LIGATURES = [
     {  # ~@
         "chars": ["asciitilde", "at"],
         "name": "asciitilde_at.liga",
-    },
-    {  # ~=  # absent from 3.0
-        "chars": ["asciitilde", "equal"],
-        "name": "asciitilde_equal.liga",
     },
     {  # ~>
         "chars": ["asciitilde", "greater"],
@@ -129,10 +132,6 @@ LIGATURES = [
             "slash",  # ***/
         ],
     },
-    {  # **/  # absent from 2.0
-        "chars": ["asterisk", "asterisk", "slash"],
-        "name": "asterisk_asterisk_slash.liga",
-    },
     {  # *>
         "chars": ["asterisk", "greater"],
         "name": "asterisk_greater.liga",
@@ -140,14 +139,6 @@ LIGATURES = [
     {  # */
         "chars": ["asterisk", "slash"],
         "name": "asterisk_slash.liga",
-    },
-    {  # \\   # absent from 2.0
-        "chars": ["backslash", "backslash"],
-        "name": "backslash_backslash.liga",
-    },
-    {  # \\\  # absent from 2.0
-        "chars": ["backslash", "backslash", "backslash"],
-        "name": "backslash_backslash_backslash.liga",
     },
     {  # \/   # new in 2.0
         "chars": ["backslash", "slash"],
@@ -165,9 +156,10 @@ LIGATURES = [
         "chars": ["bar", "bar", "bar", "greater"],
         "name": "bar_bar_bar_greater.liga",
     },
-    {  # ||=
+    {  # ||=  # FiraCode 6 only joins ||== and longer, so built from its pieces
         "chars": ["bar", "bar", "equal"],
         "name": "bar_bar_equal.liga",
+        "parts": [None, "bar_bar_equal_start.seq", "equal_end.seq"],
     },
     {  # ||>
         "chars": ["bar", "bar", "greater"],
@@ -179,6 +171,7 @@ LIGATURES = [
     {  # ||-  # new in 2.0
         "chars": ["bar", "bar", "hyphen"],
         "name": "bar_bar_hyphen.liga",
+        "parts": [None, "bar_bar_hyphen_start.seq", "hyphen_end.seq"],
     },
     {  # |}
         "chars": ["bar", "braceright"],
@@ -194,9 +187,10 @@ LIGATURES = [
             "bracketleft",  # [|]
         ],
     },
-    {  # |=
+    {  # |=  # FiraCode 6 only joins |== and longer, so built from its pieces
         "chars": ["bar", "equal"],
         "name": "bar_equal.liga",
+        "parts": ["bar_equal_start.seq", "equal_end.seq"],
         "ignore_after": [
             "bar",  # |=|
         ],
@@ -204,6 +198,7 @@ LIGATURES = [
     {  # |=>  # new in 2.0
         "chars": ["bar", "equal", "greater"],
         "name": "bar_equal_greater.liga",
+        "parts": ["bar_equal_start.seq", "equal_middle.seq", "greater_equal_end.seq"],
     },
     {  # |>
         "chars": ["bar", "greater"],
@@ -212,6 +207,7 @@ LIGATURES = [
     {  # |-
         "chars": ["bar", "hyphen"],
         "name": "bar_hyphen.liga",
+        "parts": ["bar_hyphen_start.seq", "hyphen_end.seq"],
         "ignore_after": [
             "bar",  # |-|
         ],
@@ -219,6 +215,11 @@ LIGATURES = [
     {  # |->  # new in 2.0
         "chars": ["bar", "hyphen", "greater"],
         "name": "bar_hyphen_greater.liga",
+        "parts": [
+            "bar_hyphen_start.seq",
+            "hyphen_middle.seq",
+            "greater_hyphen_end.seq",
+        ],
     },
     {  # {|
         "chars": ["braceleft", "bar"],
@@ -227,20 +228,12 @@ LIGATURES = [
             "braceright",  # {|}
         ],
     },
-    {  # {-  # absent from 2.0
-        "chars": ["braceleft", "hyphen"],
-        "name": "braceleft_hyphen.liga",
-    },
     {  # [|
         "chars": ["bracketleft", "bar"],
         "name": "bracketleft_bar.liga",
         "ignore_after": [
             "bracketright",  # [|]
         ],
-    },
-    {  # []  # absent from 2.0
-        "chars": ["bracketleft", "bracketright"],
-        "name": "bracketleft_bracketright.liga",
     },
     {  # ]#
         "chars": ["bracketright", "numbersign"],
@@ -268,9 +261,10 @@ LIGATURES = [
         "chars": ["colon", "equal"],
         "name": "colon_equal.liga",
     },
-    {  # :>
+    {  # :>  # FiraCode 6 only centers it vertically
         "chars": ["colon", "greater"],
         "name": "colon_greater.liga",
+        "parts": ["colon.center", "greater.center"],
         "ignore_after": [
             "equal",  # :>=
             "colon",  # :>:
@@ -279,9 +273,10 @@ LIGATURES = [
             "greater",  # >:>
         ],
     },
-    {  # :<
+    {  # :<  # FiraCode 6 only centers it vertically
         "chars": ["colon", "less"],
         "name": "colon_less.liga",
+        "parts": ["colon.center", "less.center"],
         "ignore_before": [
             "less",  # <:<
         ],
@@ -300,6 +295,7 @@ LIGATURES = [
     {  # =:=
         "chars": ["equal", "colon", "equal"],
         "name": "equal_colon_equal.liga",
+        "parts": ["equal_start.seq", "colon_equal_middle.seq", "equal_end.seq"],
     },
     {  # ==
         "chars": ["equal", "equal"],
@@ -318,6 +314,7 @@ LIGATURES = [
     {  # ==>
         "chars": ["equal", "equal", "greater"],
         "name": "equal_equal_greater.liga",
+        "parts": ["equal_start.seq", "equal_middle.seq", "greater_equal_end.seq"],
         "ignore_before": [
             "bracketleft",  # [==>
         ],
@@ -325,10 +322,12 @@ LIGATURES = [
     {  # =!=
         "chars": ["equal", "exclam", "equal"],
         "name": "equal_exclam_equal.liga",
+        "parts": ["equal_start.seq", "exclam_equal_middle.seq", "equal_end.seq"],
     },
     {  # =>
         "chars": ["equal", "greater"],
         "name": "equal_greater.liga",
+        "parts": ["equal_start.seq", "greater_equal_end.seq"],
         "ignore_before": [
             "bracketleft",  # [=>
         ],
@@ -339,14 +338,17 @@ LIGATURES = [
     {  # =>>
         "chars": ["equal", "greater", "greater"],
         "name": "equal_greater_greater.liga",
+        "parts": ["equal_start.seq", None, "greater_greater_equal_end.seq"],
     },
     {  # =<<
         "chars": ["equal", "less", "less"],
         "name": "equal_less_less.liga",
+        "parts": ["equal_start.seq", None, "less_less_equal_end.seq"],
     },
     {  # =/=
         "chars": ["equal", "slash", "equal"],
         "name": "equal_slash_equal.liga",
+        "parts": ["equal_start.seq", "slash_equal_middle.seq", "equal_end.seq"],
     },
     {  # !~  # new in 3.0
         "chars": ["exclam", "asciitilde"],
@@ -364,10 +366,6 @@ LIGATURES = [
         "chars": ["exclam", "exclam"],
         "name": "exclam_exclam.liga",
     },
-    {  # !!!  # absent from 2.0
-        "chars": ["exclam", "exclam", "exclam"],
-        "name": "exclam_exclam_exclam.liga",
-    },
     {  # !!.
         "chars": ["exclam", "exclam", "period"],
         "name": "exclam_exclam_period.liga",
@@ -383,9 +381,10 @@ LIGATURES = [
             "colon",  # :>=
         ],
     },
-    {  # >:
+    {  # >:  # FiraCode 6 only centers it vertically
         "chars": ["greater", "colon"],
         "name": "greater_colon.liga",
+        "parts": ["greater.center", "colon.center"],
         "ignore_after": [
             "greater",  # >:>
         ],
@@ -396,6 +395,11 @@ LIGATURES = [
     {  # >=>
         "chars": ["greater", "equal", "greater"],
         "name": "greater_equal_greater.liga",
+        "parts": [
+            "greater_equal_start.seq",
+            "equal_middle.seq",
+            "greater_equal_end.seq",
+        ],
     },
     {  # >>
         "chars": ["greater", "greater"],
@@ -406,9 +410,10 @@ LIGATURES = [
             "dollar",  # $>>
         ],
     },
-    {  # >>=
+    {  # >>=  # FiraCode 6 only joins >>== and longer, so built from its pieces
         "chars": ["greater", "greater", "equal"],
         "name": "greater_greater_equal.liga",
+        "parts": [None, "greater_greater_equal_start.seq", "equal_end.seq"],
         "ignore_before": [
             "equal",  # =>>=
         ],
@@ -428,10 +433,12 @@ LIGATURES = [
     {  # >>-
         "chars": ["greater", "greater", "hyphen"],
         "name": "greater_greater_hyphen.liga",
+        "parts": [None, "greater_greater_hyphen_start.seq", "hyphen_end.seq"],
     },
     {  # >-
         "chars": ["greater", "hyphen"],
         "name": "greater_hyphen.liga",
+        "parts": ["greater_hyphen_start.seq", "hyphen_end.seq"],
         "ignore_after": [
             "less",  # >-<
         ],
@@ -439,6 +446,11 @@ LIGATURES = [
     {  # >->
         "chars": ["greater", "hyphen", "greater"],
         "name": "greater_hyphen_greater.liga",
+        "parts": [
+            "greater_hyphen_start.seq",
+            "hyphen_middle.seq",
+            "greater_hyphen_end.seq",
+        ],
     },
     {  # m-x, different with M-x
         "chars": ["hyphen"],
@@ -459,17 +471,15 @@ LIGATURES = [
     {  # -|
         "chars": ["hyphen", "bar"],
         "name": "hyphen_bar.liga",
+        "parts": ["hyphen_start.seq", "bar_hyphen_end.seq"],
         "ignore_before": [
             "bar",  # |-|
         ],
     },
-    {  # -}  # absent from 2.0
-        "chars": ["hyphen", "braceright"],
-        "name": "hyphen_braceright.liga",
-    },
     {  # ->
         "chars": ["hyphen", "greater"],
         "name": "hyphen_greater.liga",
+        "parts": ["hyphen_start.seq", "greater_hyphen_end.seq"],
         "ignore_before": [
             "bracketleft",  # [->
         ],
@@ -477,6 +487,7 @@ LIGATURES = [
     {  # ->>
         "chars": ["hyphen", "greater", "greater"],
         "name": "hyphen_greater_greater.liga",
+        "parts": ["hyphen_start.seq", None, "greater_greater_hyphen_end.seq"],
     },
     {  # --
         "chars": ["hyphen", "hyphen"],
@@ -488,6 +499,7 @@ LIGATURES = [
     {  # -->
         "chars": ["hyphen", "hyphen", "greater"],
         "name": "hyphen_hyphen_greater.liga",
+        "parts": ["hyphen_start.seq", "hyphen_middle.seq", "greater_hyphen_end.seq"],
         "ignore_before": [
             "bracketleft",  # [-->
         ],
@@ -495,6 +507,7 @@ LIGATURES = [
     {  # ---
         "chars": ["hyphen", "hyphen", "hyphen"],
         "name": "hyphen_hyphen_hyphen.liga",
+        "parts": ["hyphen_start.seq", "hyphen_middle.seq", "hyphen_end.seq"],
         "ignore_before": [
             "bracketleft",  # [---
         ],
@@ -502,6 +515,7 @@ LIGATURES = [
     {  # -<
         "chars": ["hyphen", "less"],
         "name": "hyphen_less.liga",
+        "parts": ["hyphen_start.seq", "less_hyphen_end.seq"],
         "ignore_before": [
             "greater",  # >-<
         ],
@@ -509,6 +523,7 @@ LIGATURES = [
     {  # -<<
         "chars": ["hyphen", "less", "less"],
         "name": "hyphen_less_less.liga",
+        "parts": ["hyphen_start.seq", None, "less_less_hyphen_end.seq"],
     },
     {  # <~
         "chars": ["less", "asciitilde"],
@@ -549,9 +564,10 @@ LIGATURES = [
         "chars": ["less", "bar", "greater"],
         "name": "less_bar_greater.liga",
     },
-    {  # <:
+    {  # <:  # FiraCode 6 only centers it vertically
         "chars": ["less", "colon"],
         "name": "less_colon.liga",
+        "parts": ["less.center", "colon.center"],
         "ignore_after": [
             "less",  # <:<
         ],
@@ -577,22 +593,32 @@ LIGATURES = [
     {  # <=|  # new in 2.0
         "chars": ["less", "equal", "bar"],
         "name": "less_equal_bar.liga",
+        "parts": ["less_equal_start.seq", "equal_middle.seq", "bar_equal_end.seq"],
     },
     {  # <==
         "chars": ["less", "equal", "equal"],
         "name": "less_equal_equal.liga",
+        "parts": ["less_equal_start.seq", "equal_middle.seq", "equal_end.seq"],
     },
     {  # <==>
         "chars": ["less", "equal", "equal", "greater"],
         "name": "less_equal_equal_greater.liga",
+        "parts": [
+            "less_equal_start.seq",
+            "equal_middle.seq",
+            "equal_middle.seq",
+            "greater_equal_end.seq",
+        ],
     },
     {  # <=>
         "chars": ["less", "equal", "greater"],
         "name": "less_equal_greater.liga",
+        "parts": ["less_equal_start.seq", "equal_middle.seq", "greater_equal_end.seq"],
     },
     {  # <=<
         "chars": ["less", "equal", "less"],
         "name": "less_equal_less.liga",
+        "parts": ["less_equal_start.seq", "equal_middle.seq", "less_equal_end.seq"],
     },
     {  # <!--
         "chars": ["less", "exclam", "hyphen", "hyphen"],
@@ -605,22 +631,31 @@ LIGATURES = [
     {  # <-
         "chars": ["less", "hyphen"],
         "name": "less_hyphen.liga",
+        "parts": ["less_hyphen_start.seq", "hyphen_end.seq"],
     },
     {  # <-|  # new in 2.0
         "chars": ["less", "hyphen", "bar"],
         "name": "less_hyphen_bar.liga",
+        "parts": ["less_hyphen_start.seq", "hyphen_middle.seq", "bar_hyphen_end.seq"],
     },
     {  # <->
         "chars": ["less", "hyphen", "greater"],
         "name": "less_hyphen_greater.liga",
+        "parts": [
+            "less_hyphen_start.seq",
+            "hyphen_middle.seq",
+            "greater_hyphen_end.seq",
+        ],
     },
     {  # <--
         "chars": ["less", "hyphen", "hyphen"],
         "name": "less_hyphen_hyphen.liga",
+        "parts": ["less_hyphen_start.seq", "hyphen_middle.seq", "hyphen_end.seq"],
     },
     {  # <-<
         "chars": ["less", "hyphen", "less"],
         "name": "less_hyphen_less.liga",
+        "parts": ["less_hyphen_start.seq", "hyphen_middle.seq", "less_hyphen_end.seq"],
     },
     {  # <<
         "chars": ["less", "less"],
@@ -631,17 +666,26 @@ LIGATURES = [
             "dollar",  # $<<
         ],
     },
-    {  # <<=
+    {  # <<=  # FiraCode 6 only joins <<== and longer, so built from its pieces
         "chars": ["less", "less", "equal"],
         "name": "less_less_equal.liga",
+        "parts": [None, "less_less_equal_start.seq", "equal_end.seq"],
     },
     {  # <<-
         "chars": ["less", "less", "hyphen"],
         "name": "less_less_hyphen.liga",
+        "parts": [None, "less_less_hyphen_start.seq", "hyphen_end.seq"],
     },
     {  # <<->> # new in 3.0
         "chars": ["less", "less", "hyphen", "greater", "greater"],
         "name": "less_less_hyphen_greater_greater.liga",
+        "parts": [
+            None,
+            "less_less_hyphen_start.seq",
+            "hyphen_middle.seq",
+            None,
+            "greater_greater_hyphen_end.seq",
+        ],
     },
     {  # <<<
         "chars": ["less", "less", "less"],
@@ -694,14 +738,26 @@ LIGATURES = [
     {  # ##
         "chars": ["numbersign", "numbersign"],
         "name": "numbersign_numbersign.liga",
+        "parts": ["numbersign_start.seq", "numbersign_end.seq"],
     },
     {  # ###
         "chars": ["numbersign", "numbersign", "numbersign"],
         "name": "numbersign_numbersign_numbersign.liga",
+        "parts": [
+            "numbersign_start.seq",
+            "numbersign_middle.seq",
+            "numbersign_end.seq",
+        ],
     },
     {  # ####
         "chars": ["numbersign", "numbersign", "numbersign", "numbersign"],
         "name": "numbersign_numbersign_numbersign_numbersign.liga",
+        "parts": [
+            "numbersign_start.seq",
+            "numbersign_middle.seq",
+            "numbersign_middle.seq",
+            "numbersign_end.seq",
+        ],
     },
     {  # #(
         "chars": ["numbersign", "parenleft"],
@@ -723,17 +779,13 @@ LIGATURES = [
         "chars": ["percent", "percent"],
         "name": "percent_percent.liga",
     },
-    {  # %%%  # absent from 2.0
-        "chars": ["percent", "percent", "percent"],
-        "name": "percent_percent_percent.liga",
-    },
-    {  # .=
+    {  # .=  # optional (cv32) since FiraCode 6.0
         "chars": ["period", "equal"],
-        "name": "period_equal.liga",
+        "name": "period_equal.cv32",
     },
-    {  # .-
+    {  # .-  # optional (cv25) since FiraCode 6.0
         "chars": ["period", "hyphen"],
-        "name": "period_hyphen.liga",
+        "name": "period_hyphen.cv25",
     },
     {  # ..
         "chars": ["period", "period"],
@@ -779,10 +831,6 @@ LIGATURES = [
         "chars": ["plus", "plus", "plus"],
         "name": "plus_plus_plus.liga",
     },
-    {  # ?:  # absent from 3.0
-        "chars": ["question", "colon"],
-        "name": "question_colon.liga",
-    },
     {  # ?=
         "chars": ["question", "equal"],
         "name": "question_equal.liga",
@@ -795,25 +843,13 @@ LIGATURES = [
         "chars": ["question", "question"],
         "name": "question_question.liga",
     },
-    {  # ???  # absent from 2.0
-        "chars": ["question", "question", "question"],
-        "name": "question_question_question.liga",
-    },
     {  # ;;
         "chars": ["semicolon", "semicolon"],
         "name": "semicolon_semicolon.liga",
     },
-    {  # ;;;  # absent from 2.0
-        "chars": ["semicolon", "semicolon", "semicolon"],
-        "name": "semicolon_semicolon_semicolon.liga",
-    },
     {  # /*
         "chars": ["slash", "asterisk"],
         "name": "slash_asterisk.liga",
-    },
-    {  # /**  # absent from 2.0
-        "chars": ["slash", "asterisk", "asterisk"],
-        "name": "slash_asterisk_asterisk.liga",
     },
     {  # /\   # new in 2.0
         "chars": ["slash", "backslash"],
@@ -822,10 +858,12 @@ LIGATURES = [
     {  # /=
         "chars": ["slash", "equal"],
         "name": "slash_equal.liga",
+        "parts": ["slash_equal_start.seq", "equal_end.seq"],
     },
     {  # /==
         "chars": ["slash", "equal", "equal"],
         "name": "slash_equal_equal.liga",
+        "parts": ["slash_equal_start.seq", "equal_middle.seq", "equal_end.seq"],
     },
     {  # />
         "chars": ["slash", "greater"],
@@ -842,10 +880,16 @@ LIGATURES = [
     {  # _|_
         "chars": ["underscore", "bar", "underscore"],
         "name": "underscore_bar_underscore.liga",
+        "parts": [
+            "underscore_start.seq",
+            "bar_underscore_middle.seq",
+            "underscore_end.seq",
+        ],
     },
     {  # __
         "chars": ["underscore", "underscore"],
         "name": "underscore_underscore.liga",
+        "parts": ["underscore_start.seq", "underscore_end.seq"],
     },
     {  # www
         "chars": ["w", "w", "w"],

@@ -26,7 +26,7 @@ def parse_args():
         "ligature_font_file",
         type=str,
         metavar="PATH",
-        help="The OTF font to copy ligatures from.",
+        help="The TTF or OTF font to copy ligatures from.",
     )
     parser.add_argument(
         "--name",

@@ -9,7 +9,7 @@ dybatpho::register_err_handler
 
 FONT_FAMILY_NAME="Iosevka Dynamo"
 FONT_FAMILY_VERSION="v2.1.0"
-FIRACODE_VERSION="3.1"
+FIRACODE_VERSION="6.2"
 IOSEVKA_VERSION="latest"
 IOSEVKA_VARIANT="FixedSS05" # Use fixed version of Fira Mono style variant
 # Public URL of the site hosted on GitHub Pages
@@ -62,20 +62,32 @@ function _download_iosevka {
 }
 
 #######################################
-# @description Download FiraCode font from GitHub repository
+# @description Download FiraCode font from GitHub release
 # @noargs
 #######################################
 function _download_firacode {
-  dybatpho::notice "Downloading FiraCode font version: ${FIRACODE_VERSION}"
   local -a fira_style_names=("Regular" "Bold")
+  local -a missing_styles=()
   for style in "${fira_style_names[@]}"; do
-    if dybatpho::is file "${ASSETS_DIR}/FiraCode-${style}.otf"; then
+    if dybatpho::is file "${ASSETS_DIR}/FiraCode-${style}.ttf"; then
       dybatpho::info "Already have FiraCode ${style}"
-      continue
+    else
+      missing_styles+=("$style")
     fi
-    dybatpho::curl_download \
-      "https://raw.githubusercontent.com/tonsky/FiraCode/${FIRACODE_VERSION}/distr/otf/FiraCode-${style}.otf" \
-      "${ASSETS_DIR}/FiraCode-${style}.otf"
+  done
+  if [ "${#missing_styles[@]}" -eq 0 ]; then
+    return
+  fi
+
+  # Since 6.x the release ships TTF only, in one zip for every style
+  dybatpho::notice "Downloading FiraCode font version: ${FIRACODE_VERSION}"
+  local zip_file
+  dybatpho::create_temp zip_file ".zip"
+  dybatpho::curl_download \
+    "https://github.com/tonsky/FiraCode/releases/download/${FIRACODE_VERSION}/Fira_Code_v${FIRACODE_VERSION}.zip" \
+    "$zip_file"
+  for style in "${missing_styles[@]}"; do
+    unzip -qqo -j "$zip_file" "ttf/FiraCode-${style}.ttf" -d "${ASSETS_DIR}"
   done
   dybatpho::success "Downloaded FiraCode"
 }
@@ -141,7 +153,7 @@ function _main {
     dybatpho::notice "Make font ${FONT_FAMILY_NAME} ${style_name}"
     "${SRC_DIR}/main.py" \
       "${ASSETS_DIR}/Iosevka${IOSEVKA_VARIANT}-${style_name}.ttf" \
-      "$(realpath "${ASSETS_DIR}/FiraCode-${fira_style}.otf")" \
+      "$(realpath "${ASSETS_DIR}/FiraCode-${fira_style}.ttf")" \
       -n "$FONT_FAMILY_NAME" \
       -s "$style_name" -d \
       -v "${FONT_FAMILY_VERSION}" \

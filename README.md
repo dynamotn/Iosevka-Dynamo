@@ -6,10 +6,14 @@ Although Iosevka has ligatures, but it's not work with my kitty terminal (https:
 And FiraCode has some ligatures that I need.
 
 ## Which version of font that I use?
-FiraCode v4 has infinite-length that I don't want to use and has some bugs on kitty (https://github.com/tonsky/FiraCode/issues/1081).
-So I will use FiraCode v3.1 for my font.
-> ![NOTE]
-> TODO: I will try to get some ligatures in higher version to my font in the future.
+The ligature glyphs come from FiraCode v6.2, the latest release.
+
+Since v4, FiraCode draws arrows and lines (`->`, `==>`, `<=>`, `##`, `__`...) from
+`start`/`middle`/`end` pieces with infinite-length rules, which I don't want to use and
+which have some bugs on kitty (https://github.com/tonsky/FiraCode/issues/1081).
+This font copies the same pieces but keeps its own fixed-length rules, so `-->` is a
+ligature and `---->` is not. A few ligatures that FiraCode 6 dropped or made optional
+(`|=`, `||=`, `>>=`, `<<=`, `.=`, `.-`) are still built from its glyphs.
 
 ## Requirements
 This script requires FontForge to build font. AFAIK, you can must `python-fontforge` (Debian/Ubuntu or ArchLinux) or `fontforge` (Gentoo, OpenSUSE).

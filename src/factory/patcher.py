@@ -55,7 +55,7 @@ class Patcher(object):
             name: (string) Name of character in ligature font.
             is_ligature: (bool) Flag to specify character that is ligature
         """
-        if is_ligature:
+        if is_ligature and name not in self.base_font:
             # Create a new character for ligature
             self.base_font.createChar(-1, name)
 
@@ -84,13 +84,16 @@ class Patcher(object):
         glyph.transform(psMat.scale(scale, 1.0))
         glyph.width = max_width
 
-    def create_single_lookup(self, input_chars, ligature_name):
+    def create_single_lookup(self, input_chars, ligature_name, parts=None):
         """
         Create FontForge lookup, for each segment of ligature from input chars.
 
         Args:
             input_chars: (list) A list of input characters.
             ligature_name: (string) Name of ligature in ligature font.
+            parts: (list) Glyph of ligature font to draw in each cell, or
+                None for an empty cell. Without it, the last cell draws
+                ligature_name and the other cells are empty.
         """
         lookup_name = lambda i: Patcher.SINGLE_MAIN_LOOKUP.format(ligature_name, i)
         subtable_name = lambda i: Patcher.SINGLE_SUBTABLE_LOOKUP.format(
@@ -106,14 +109,20 @@ class Patcher(object):
                 # Add glyph for current char if base font doesn't have it
                 self.base_font[ord(CHAR_DICT[char])].glyphname = char
 
-            if i < len(input_chars) - 1:
+            if parts:
+                replacement = parts[i]
+            elif i < len(input_chars) - 1:
+                replacement = None
+            else:
+                replacement = ligature_name
+
+            if replacement is None:
                 print(
                     "Adding empty glyph and replace rule for {}.{} char {}".format(
                         ligature_name, i, char
                     )
                 )
-                # Create an empty glyph for each segment of ligature,
-                # exclude last char
+                # Create an empty glyph for each empty segment of ligature
                 self.base_font.selection.none()
                 self.base_font.selection.select(SPACE)
                 self.base_font.copy()
@@ -123,17 +132,15 @@ class Patcher(object):
                 self.base_font.selection.select(spacer_name(i))
                 self.base_font.paste()
 
-                # Add rule for replacement if match
-                # from first to nearest last char of ligatures
-                self.base_font[char].addPosSub(subtable_name(i), spacer_name(i))
+                replacement = spacer_name(i)
             else:
                 print(
-                    "Adding replace rule for {}.{} char {}".format(
-                        ligature_name, i, char
+                    "Adding replace rule for {}.{} char {} -> {}".format(
+                        ligature_name, i, char, replacement
                     )
                 )
-                # Add rule for replacement if match last char of ligatures
-                self.base_font[char].addPosSub(subtable_name(i), ligature_name)
+            # Add rule for replacement of this segment if the sequence matches
+            self.base_font[char].addPosSub(subtable_name(i), replacement)
 
     def create_matching_lookup(self, input_chars, ligature_name, **kwargs):
         """
@@ -269,6 +276,7 @@ class Patcher(object):
         ligature_name,
         ignore_before=None,
         ignore_after=None,
+        parts=None,
         **kwargs,
     ):
         """Add ligature character & rules of it to base font that follow a
@@ -281,14 +289,37 @@ class Patcher(object):
                 want to ignore ligature if has character(s) before the start
             ignore_after: (list) A list of additional rules that
                 want to ignore ligature if has character(s) after the end.
+            parts: (list) Glyph of ligature font for each cell, see
+                create_single_lookup. When given, ligature_name only names
+                the lookups.
+
+        Raises:
+            LookupError: a glyph is missing in the ligature font, so the
+                ligature would be silently lost.
         """
-        # Create a new character for ligature by copy and paste by FontForge
-        if not self.copy_char_from_source(ligature_name):
-            return
-        self.paste_char_to_destination(ligature_name)
+        if parts and len(parts) != len(input_chars):
+            raise ValueError(
+                "{} has {} parts for {} chars".format(
+                    ligature_name, len(parts), len(input_chars)
+                )
+            )
+
+        # Copy each glyph of ligature from ligature font by FontForge
+        glyphs = [part for part in parts if part] if parts else [ligature_name]
+        for glyph in glyphs:
+            if glyph in self.base_font:
+                # Piece shared with an already added ligature
+                continue
+            if not self.copy_char_from_source(glyph):
+                raise LookupError(
+                    "Glyph {} of {} is missing in ligature font".format(
+                        glyph, ligature_name
+                    )
+                )
+            self.paste_char_to_destination(glyph)
 
         # Create FontForge lookup
-        self.create_single_lookup(input_chars, ligature_name)
+        self.create_single_lookup(input_chars, ligature_name, parts)
         self.create_matching_lookup(input_chars, ligature_name, **kwargs)
         self.create_ignore_subtable(
             input_chars, ligature_name, ignore_before, ignore_after
@@ -312,6 +343,7 @@ class Patcher(object):
                     spec["name"],
                     spec.get("ignore_before", []),
                     spec.get("ignore_after", []),
+                    parts=spec.get("parts"),
                     rule=spec.get("rule", ""),
                     rule_kind=spec.get("rule_kind", "glyph"),
                 )
