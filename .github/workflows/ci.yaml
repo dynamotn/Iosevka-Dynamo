@@ -38,6 +38,9 @@ jobs:
         run: |
           bash -c $(pwd)/scripts/build.sh
           tar czvf iosevka-dynamo.tar.gz -C build .
+      - name: Show FontForge log
+        if: failure()
+        run: cat debug.log
       - name: Test built fonts
         run: python3 -m unittest discover -s test
       - name: Release all files

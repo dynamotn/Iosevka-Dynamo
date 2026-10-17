@@ -54,6 +54,11 @@ class Patcher(object):
 
             # Scale ligature font to em size of base font
             self.liga_font.em = self.base_font.em
+            # FiraCode (TTF since 6.0) builds many ligatures as references to
+            # other glyphs, e.g. <| is |> mirrored. Pasting a reference to a
+            # glyph the base font lacks crashes FontForge, so bake them in.
+            self.liga_font.selection.all()
+            self.liga_font.unlinkReferences()
         except Exception as e:
             print("Exception while opening font file: {}".format(e))
             raise
