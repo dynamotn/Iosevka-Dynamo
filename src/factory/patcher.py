@@ -1,8 +1,11 @@
 """Font patcher to copy the ligature glyphs"""
 
+import tempfile
+
 import fontforge
 import psMat
 
+from decompose import decompose_file
 from features import glyphs_of, read_feature
 
 # Characters that appear in ligatures, copied from the ligature font so they
@@ -50,15 +53,17 @@ class Patcher(object):
         """
         try:
             self.base_font = fontforge.open(base_font)
-            self.liga_font = fontforge.open(liga_font)
+            # FiraCode (TTF since 6.0) builds many ligatures as references to
+            # other glyphs, e.g. <| is |> mirrored. FontForge crashes when
+            # pasting a reference to a glyph the base font lacks, and scales
+            # the referenced outline wrongly when the em size changes, so
+            # open a copy whose composites are plain outlines.
+            self.decomposed_file = tempfile.NamedTemporaryFile(suffix=".ttf").name
+            decompose_file(liga_font, self.decomposed_file)
+            self.liga_font = fontforge.open(self.decomposed_file)
 
             # Scale ligature font to em size of base font
             self.liga_font.em = self.base_font.em
-            # FiraCode (TTF since 6.0) builds many ligatures as references to
-            # other glyphs, e.g. <| is |> mirrored. Pasting a reference to a
-            # glyph the base font lacks crashes FontForge, so bake them in.
-            self.liga_font.selection.all()
-            self.liga_font.unlinkReferences()
         except Exception as e:
             print("Exception while opening font file: {}".format(e))
             raise
