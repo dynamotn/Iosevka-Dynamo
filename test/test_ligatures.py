@@ -41,6 +41,40 @@ class BuiltFontTest(unittest.TestCase):
                 with self.subTest(font=path.basename(built), text=text):
                     self.assertEqual(ours(text), cases.expected(fira, text))
 
+    def test_copied_glyphs_keep_firacode_proportions(self):
+        """Each copied glyph is FiraCode's, scaled to Iosevka's em and cell"""
+        from fontTools.pens.boundsPen import BoundsPen
+
+        def bounds(font, name):
+            pen = BoundsPen(font.getGlyphSet())
+            font.getGlyphSet()[name].draw(pen)
+            return pen.bounds
+
+        for built, fira_style in BUILT_FONTS.items():
+            ours, fira = TTFont(built), TTFont(cases.FIRACODE[fira_style])
+            scale_y = ours["head"].unitsPerEm / fira["head"].unitsPerEm
+            scale_x = ours["hmtx"]["m"][0] / fira["hmtx"]["m"][0]
+            copied = [
+                g
+                for g in ours.getGlyphOrder()
+                if g in fira.getGlyphOrder() and ("." in g or "_" in g)
+            ]
+            self.assertGreater(len(copied), 150)
+            for name in copied:
+                expected = bounds(fira, name)
+                if expected is None:
+                    continue
+                with self.subTest(font=path.basename(built), glyph=name):
+                    xmin, ymin, xmax, ymax = expected
+                    want = (
+                        xmin * scale_x,
+                        ymin * scale_y,
+                        xmax * scale_x,
+                        ymax * scale_y,
+                    )
+                    for got, exp in zip(bounds(ours, name), want):
+                        self.assertAlmostEqual(got, exp, delta=4)
+
     def test_fixed_pitch(self):
         """macOS only lists the font as monospace with this flag (issue #2)"""
         for built in BUILT_FONTS:
