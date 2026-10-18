@@ -65,6 +65,10 @@ jobs:
           path: public
   deploy:
     needs: build
+    # The github-pages environment only accepts the main branch, so a tag
+    # build publishes the release and the site follows from the next run on
+    # main (manual or scheduled), which builds the same fonts.
+    if: github.ref_type == 'branch'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
