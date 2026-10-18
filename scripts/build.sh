@@ -45,10 +45,15 @@ function _download_iosevka {
     return
   fi
   if [ "${IOSEVKA_VERSION}" == "latest" ]; then
-    local release_file
-    dybatpho::create_temp release_file ".json"
-    dybatpho::curl_do https://api.github.com/repos/be5invis/Iosevka/releases/latest "$release_file"
-    IOSEVKA_VERSION=$(grep -Po "tag_name\": \"(\K.*)(?=\",)" "$release_file")
+    # The GitHub API is rate limited per IP, which CI runners share, so read
+    # the tag from the redirect of the release page instead
+    local latest_url
+    latest_url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+      https://github.com/be5invis/Iosevka/releases/latest) \
+      || dybatpho::die "Cannot find the latest Iosevka release"
+    IOSEVKA_VERSION="${latest_url##*/}"
+    [[ "$IOSEVKA_VERSION" == v* ]] \
+      || dybatpho::die "Unexpected Iosevka release URL: ${latest_url}"
   fi
   dybatpho::notice "Downloading Iosevka font version: ${IOSEVKA_VERSION}"
   local zip_file
