@@ -8,7 +8,7 @@ SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 dybatpho::register_err_handler
 
 FONT_FAMILY_NAME="Iosevka Dynamo"
-FONT_FAMILY_VERSION="v2.1.0"
+FONT_FAMILY_VERSION="v2.2.0"
 FIRACODE_VERSION="6.2"
 IOSEVKA_VERSION="latest"
 IOSEVKA_VARIANT="FixedSS05" # Use fixed version of Fira Mono style variant
