@@ -40,9 +40,17 @@ python3 -m unittest discover -s test
 
 The tests that need `assets/` or `build/` are skipped until `scripts/build.sh` has run, so CI runs the suite before and after the build. `test/pattern.txt` lists the same cases for checking by eye in a terminal.
 
+## Releases
+CI builds the fonts on every `v*` tag, on a manual run and once a day. A tag build attaches
+`iosevka-dynamo.tar.gz` (every style) and the `iosevka-dynamo-nerd-*.ttf` files to the GitHub
+release of that tag. To release, set `FONT_FAMILY_VERSION` in `scripts/build.sh`, move the
+`[Unreleased]` entries of `CHANGELOG.md` under the version, and push the tag.
+
 ## Use on the web
-Every CI build converts the fonts to WOFF2 and publishes them to GitHub Pages at
-https://dynamotn.github.io/Iosevka-Dynamo/, together with a demo page.
+Every CI build converts the fonts to WOFF2, and the builds from the `main` branch (manual or
+daily) publish them to GitHub Pages at https://dynamotn.github.io/Iosevka-Dynamo/, together with
+a demo page. The `github-pages` environment only accepts `main`, so a tag build does not deploy
+the site itself; the next run on `main` builds the same fonts and does.
 
 Embed the font with a single stylesheet:
 ```html
